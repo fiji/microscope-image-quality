@@ -89,6 +89,7 @@
 			Wisconsin-Madison and Google, Inc.</license.copyrightOwners>
 		<!-- TODO: remove override once pom-scijava 16.3.0 is released. -->
 		<tensorflow.version>1.2.0</tensorflow.version>
+		<proto.version>1.2.0</proto.version>
 	</properties>
 
 	<repositories>
@@ -107,6 +108,11 @@
 			<groupId>org.tensorflow</groupId>
 			<artifactId>tensorflow</artifactId>
 			<version>${tensorflow.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.tensorflow</groupId>
+			<artifactId>proto</artifactId>
+			<version>${proto.version}</version>
 		</dependency>
 
 		<dependency>
