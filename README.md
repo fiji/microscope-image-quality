@@ -1,3 +1,5 @@
+[![](https://travis-ci.org/fiji/microscope-image-quality.svg?branch=master)](https://travis-ci.org/fiji/microscope-image-quality)
+
 # [ImageJ](https://imagej.net) plugin for the microscope image focus quality classifier.
 
 ## Quickstart
