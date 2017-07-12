@@ -8,49 +8,110 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>14.0.0</version>
+		<version>16.2.0</version>
 		<relativePath />
 	</parent>
 
-	<!-- TODO(ashankar,samuely): Perhaps some other maven coordinates? -->
-	<groupId>com.google.research.biology.microscopy</groupId>
-	<artifactId>quality</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<groupId>sc.fiji</groupId>
+	<artifactId>microscope-image-quality</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
 
-	<!-- TODO(ashankar,samuely): Update these with pointers to the paper and other good stuff. -->
-	<name>Microscopy Image Focus Quality Classifier Plugin for ImageJ.</name>
+	<name>Microscopy Image Focus Quality Classifier</name>
 	<description>ImageJ plugin to get a microsope image annotated with focus quality.</description>
-	<url>https://microscopeimagequality.googlesource.com/All-Projects/+/main</url>
+	<url>https://github.com/fiji/microscope-image-quality</url>
 	<inceptionYear>2017</inceptionYear>
+	<organization>
+		<name>Fiji</name>
+		<url>http://fiji.sc/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Simplified BSD License</name>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>ctrueden</id>
+			<name>Curtis Rueden</name>
+			<url>https://imagej.net/User:Rueden</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Samuel Yang</name>
+			<roles><role>founder</role></roles>
+		</contributor>
+		<contributor>
+			<name>Asim Shankar</name>
+			<properties><id>asimshankar</id></properties>
+			<roles><role>founder</role></roles>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
+	<scm>
+		<connection>scm:git:git://github.com/fiji/microscope-image-quality</connection>
+		<developerConnection>scm:git:git@github.com:fiji/microscope-image-quality</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/microscope-image-quality</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/fiji/microscope-image-quality/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/fiji/microscope-image-quality</url>
+	</ciManagement>
+
+	<properties>
+		<main-class>MicroscopeImageFocusQualityClassifier</main-class>
+		<license.licenseName>bsd_2</license.licenseName>
+		<license.copyrightOwners>Board of Regents of the University of
+			Wisconsin-Madison and Google, Inc.</license.copyrightOwners>
+		<!-- TODO: remove override once pom-scijava 16.3.0 is released. -->
+		<tensorflow.version>1.2.0</tensorflow.version>
+	</properties>
 
 	<repositories>
 		<repository>
 			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<url>https://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
-
-	<properties>
-		<!-- This repository only contains samples. To keep the pom.xml
-				 more focused, I've removed requirements (such as contributor,
-				 developer, source code management) enforced by the maven-enforcer-plugin
-				 for publishable plugins. -->
-		<enforcer.skip>true</enforcer.skip>
-		<exec.mainClass>MicroscopeImageFocusQualityClassifier</exec.mainClass>
-	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
 		</dependency>
-		<!-- Dependency on the TensorFlow Java API. -->
 		<dependency>
 			<groupId>org.tensorflow</groupId>
 			<artifactId>tensorflow</artifactId>
-			<version>1.2.0</version>
+			<version>${tensorflow.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<!-- Could use the download-maven-plugin to package the model. -->
-	<!-- See https://github.com/asimshankar/imagej-tensorflow/tree/master/pom.xml for an example. -->
 </project>
