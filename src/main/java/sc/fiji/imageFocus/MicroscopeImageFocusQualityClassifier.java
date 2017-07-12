@@ -1,3 +1,5 @@
+package sc.fiji.imageFocus;
+
 import io.scif.img.ImgOpener;
 import java.io.File;
 import java.io.IOException;

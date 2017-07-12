@@ -82,7 +82,8 @@
 	</ciManagement>
 
 	<properties>
-		<main-class>MicroscopeImageFocusQualityClassifier</main-class>
+		<main-class>sc.fiji.imageFocus.MicroscopeImageFocusQualityClassifier</main-class>
+		<package-name>sc.fiji.imageFocus</package-name>
 		<license.licenseName>bsd_2</license.licenseName>
 		<license.copyrightOwners>Board of Regents of the University of
 			Wisconsin-Madison and Google, Inc.</license.copyrightOwners>
