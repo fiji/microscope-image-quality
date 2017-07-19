@@ -26,7 +26,8 @@
 	</organization>
 	<licenses>
 		<license>
-			<name>Simplified BSD License</name>
+			<name>Apache Software License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -84,9 +85,9 @@
 	<properties>
 		<main-class>sc.fiji.imageFocus.MicroscopeImageFocusQualityClassifier</main-class>
 		<package-name>sc.fiji.imageFocus</package-name>
-		<license.licenseName>bsd_2</license.licenseName>
-		<license.copyrightOwners>Board of Regents of the University of
-			Wisconsin-Madison and Google, Inc.</license.copyrightOwners>
+		<license.licenseName>apache_v2</license.licenseName>
+		<license.copyrightOwners>Google, Inc. and Board of Regents of the
+University of Wisconsin-Madison.</license.copyrightOwners>
 		<!-- TODO: remove override once pom-scijava 16.3.0 is released. -->
 		<tensorflow.version>1.2.0</tensorflow.version>
 		<proto.version>1.2.0</proto.version>
