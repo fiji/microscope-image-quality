@@ -29,9 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.imagej.Dataset;
-import net.imagej.ImageJ;
 import net.imagej.tensorflow.Tensors;
-import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -191,11 +189,5 @@ public class MicroscopeImageFocusQualityClassifier implements Command {
 			return n.substring(0, n.lastIndexOf(":0"));
 		}
 		return n;
-	}
-
-	public static void main(final String[] args) {
-		final ImageJ ij = new ImageJ();
-		ij.launch(args);
-		ij.command().run(MicroscopeImageFocusQualityClassifier.class, true);
 	}
 }
