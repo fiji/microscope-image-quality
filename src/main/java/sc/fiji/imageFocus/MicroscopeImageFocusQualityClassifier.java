@@ -21,8 +21,6 @@
 
 package sc.fiji.imageFocus;
 
-import io.scif.img.ImgOpener;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,7 +29,7 @@ import java.util.List;
 import net.imagej.Dataset;
 import net.imagej.tensorflow.Tensors;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import org.scijava.ItemIO;
@@ -71,19 +69,18 @@ import org.tensorflow.framework.TensorInfo;
  * </ul>
  */
 @Plugin(type = Command.class, menuPath = "Microscopy>Focus Quality")
-public class MicroscopeImageFocusQualityClassifier implements Command {
+public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
+	implements Command
+{
 
 	@Parameter
 	private LogService logService;
 
 	@Parameter(label = "Microscope Image")
-	private File imageFile;
+	private Img<T> originalImage;
 
 	@Parameter(label = "Focus Quality Model", style = "directory")
 	private File modelDir;
-
-	@Parameter(type = ItemIO.OUTPUT)
-	private Img<UnsignedShortType> originalImage;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Dataset annotatedImage;
@@ -122,8 +119,6 @@ public class MicroscopeImageFocusQualityClassifier implements Command {
 			// the model exporter (export_saved_model()) in Python.
 			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
 				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
-			originalImage = new ImgOpener().openImg(imageFile.getAbsolutePath(),
-				new ArrayImgFactory<UnsignedShortType>(), new UnsignedShortType());
 			validateFormat(originalImage);
 			try (Tensor inputTensor = Tensors.tensor(originalImage, true)) {
 				final long runModelStart = System.nanoTime();
@@ -171,7 +166,7 @@ public class MicroscopeImageFocusQualityClassifier implements Command {
 		}
 	}
 
-	private void validateFormat(final Img<UnsignedShortType> image)
+	private void validateFormat(final Img<T> image)
 		throws IOException
 	{
 		final int ndims = image.numDimensions();
