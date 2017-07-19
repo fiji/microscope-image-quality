@@ -179,8 +179,12 @@ public class MicroscopeImageFocusQualityClassifier implements Command {
 			final long[] dims = new long[ndims];
 			image.dimensions(dims);
 			throw new IOException(
-				"Can only process greyscale images, not an image with " + ndims +
+				"Can only process 2D images, not an image with " + ndims +
 					" dimensions (" + Arrays.toString(dims) + ")");
+		}
+		if (!(image.firstElement() instanceof UnsignedShortType)) {
+			throw new IOException("Can only process uint16 images. " +
+				"Please convert your image first via Image > Type > 16-bit.");
 		}
 	}
 
