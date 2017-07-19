@@ -91,6 +91,7 @@ University of Wisconsin-Madison.</license.copyrightOwners>
 		<!-- TODO: remove override once pom-scijava 16.3.0 is released. -->
 		<tensorflow.version>1.2.0</tensorflow.version>
 		<proto.version>1.2.0</proto.version>
+		<imagej-tensorflow.version>0.1.0</imagej-tensorflow.version>
 	</properties>
 
 	<repositories>
@@ -104,6 +105,11 @@ University of Wisconsin-Madison.</license.copyrightOwners>
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-tensorflow</artifactId>
+			<version>${imagej-tensorflow.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.tensorflow</groupId>
