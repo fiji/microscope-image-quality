@@ -30,6 +30,7 @@ import java.util.List;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
+import net.imagej.tensorflow.Tensors;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -120,7 +121,7 @@ public class MicroscopeImageFocusQualityClassifier implements Command {
 			originalImage = new ImgOpener().openImg(imageFile.getAbsolutePath(),
 				new ArrayImgFactory<UnsignedShortType>(), new UnsignedShortType());
 			validateFormat(originalImage);
-			try (Tensor inputTensor = inputImageTensor(originalImage)) {
+			try (Tensor inputTensor = Tensors.tensor(originalImage, true)) {
 				final long runModelStart = System.nanoTime();
 				final List<Tensor> fetches = model.session().runner() //
 					.feed(opName(sig.getInputsOrThrow("input")), inputTensor) //
@@ -177,42 +178,6 @@ public class MicroscopeImageFocusQualityClassifier implements Command {
 				"Can only process greyscale images, not an image with " + ndims +
 					" dimensions (" + Arrays.toString(dims) + ")");
 		}
-	}
-
-	/**
-	 * Convert an Img object into a Tensor suitable for input to the focus quality
-	 * classification model.
-	 */
-	private Tensor inputImageTensor(final Img<UnsignedShortType> image)
-		throws IOException
-	{
-		final int width = (int) image.dimension(0);
-		final int height = (int) image.dimension(1);
-		logService.info("Width = " + width + ", height = " + height);
-
-		final RandomAccess<UnsignedShortType> r = image.randomAccess();
-		final float[][] pixels = new float[height][width];
-		final int pos[] = new int[2];
-		for (int x = 0; x < width; ++x) {
-			for (int y = 0; y < height; ++y) {
-				pos[0] = x;
-				pos[1] = y;
-				r.setPosition(pos);
-				pixels[y][x] = (float) r.get().get() / 65535;
-			}
-		}
-		// An opportunity for optimization here: Instead of filling in a 2D pixels
-		// array,
-		// create a flattened array and use:
-		// Tensor.create(new long[]{height, width}, FloatBuffer.wrap(pixels));
-		// That will save some reflection cost if the Tensor.create() call here is
-		// too expensive.
-		final long start = System.nanoTime();
-		final Tensor t = Tensor.create(pixels);
-		final long end = System.nanoTime();
-		logService.info(String.format("Created Tensor from %dx%d image in %dns",
-			height, width, (end - start)));
-		return t;
 	}
 
 	// The SignatureDef inputs and outputs contain names of the form
