@@ -92,6 +92,7 @@ University of Wisconsin-Madison.</license.copyrightOwners>
 		<tensorflow.version>1.2.0</tensorflow.version>
 		<proto.version>1.2.0</proto.version>
 		<imagej-tensorflow.version>0.1.0</imagej-tensorflow.version>
+		<scijava-ui-swing.version>0.9.3</scijava-ui-swing.version>
 	</properties>
 
 	<repositories>
