@@ -49,6 +49,12 @@ import org.tensorflow.framework.TensorInfo;
  * Command to apply the Microscopy image focus quality classifier model on an
  * input (16-bit, greyscale image).
  * <p>
+ * The model has been trained on raw 16-bit microscope images with
+ * integer-valued inputs in {@code [0, 65535]}, where the black level is usually
+ * in {@code [0, ~1000]} and the typical brightness of cells is in
+ * {@code [~1000, ~10,000]}.
+ * </p>
+ * <p>
  * This command will show both the input image and an annotated image marking
  * regions of the image with their focus quality.
  * <p>
