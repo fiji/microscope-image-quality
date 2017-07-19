@@ -183,11 +183,12 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		}
 	}
 
-	// The SignatureDef inputs and outputs contain names of the form
-	// <operation_name>:<output_index>,
-	// where for this model, <output_index> is always 0. This function trims the
-	// ":0" suffix to
-	// get the operation name.
+	/**
+	 * The SignatureDef inputs and outputs contain names of the form
+	 * {@code <operation_name>:<output_index>}, where for this model,
+	 * {@code <output_index>} is always 0. This function trims the {@code :0}
+	 * suffix to get the operation name.
+	 */
 	private static String opName(final TensorInfo t) {
 		final String n = t.getName();
 		if (n.endsWith(":0")) {
