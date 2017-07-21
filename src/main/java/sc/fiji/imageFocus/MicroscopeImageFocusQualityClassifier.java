@@ -73,6 +73,16 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	implements Command
 {
 
+	// Same as the tag used in export_saved_model in the Python code.
+	private static final String MODEL_TAG = "inference";
+
+	// Same as
+	// tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
+	// in Python. Perhaps this should be an exported constant in TensorFlow's Java
+	// API.
+	private static final String DEFAULT_SERVING_SIGNATURE_DEF_KEY =
+		"serving_default";
+
 	@Parameter
 	private LogService logService;
 
@@ -84,15 +94,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Dataset annotatedImage;
-
-	// Same as the tag used in export_saved_model in the Python code.
-	private static final String MODEL_TAG = "inference";
-	// Same as
-	// tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
-	// in Python. Perhaps this should be an exported constant in TensorFlow's Java
-	// API.
-	private static final String DEFAULT_SERVING_SIGNATURE_DEF_KEY =
-		"serving_default";
 
 	/*
 	 * The run() method is where we do the actual 'work' of the command.
