@@ -91,7 +91,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	private TensorFlowService tensorFlowService;
 
 	@Parameter
-	private LogService logService;
+	private LogService log;
 
 	@Parameter(label = "Microscope Image")
 	private Img<T> originalImage;
@@ -112,7 +112,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			final SavedModelBundle model = //
 					tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG);
 			final long loadModelEnd = System.nanoTime();
-			logService.info(String.format(
+			log.info(String.format(
 				"Loaded microscope focus image quality model in %dms", (loadModelEnd -
 					loadModelStart) / 1000000));
 
@@ -139,7 +139,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		}
 		catch (final Exception exc) {
 			// Use the LogService to report the error.
-			logService.error(exc);
+			log.error(exc);
 		}
 	}
 
@@ -177,17 +177,17 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	private void processPatches(final long runModelStart, final long runModelEnd,
 		Tensor probabilities, Tensor patches)
 	{
-		logService.info(String.format("Ran image through model in %dms",
+		log.info(String.format("Ran image through model in %dms",
 			(runModelEnd - runModelStart) / 1000000));
-		logService.info("Probabilities shape: " + Arrays.toString(probabilities
+		log.info("Probabilities shape: " + Arrays.toString(probabilities
 			.shape()));
-		logService.info("Patches shape: " + Arrays.toString(patches.shape()));
+		log.info("Patches shape: " + Arrays.toString(patches.shape()));
 
 		final float[][] floatProbs = new float[(int) probabilities
 			.shape()[0]][(int) probabilities.shape()[1]];
 		probabilities.copyTo(floatProbs);
 		for (int i = 0; i < probabilities.shape()[0]; ++i) {
-			logService.info(String.format("Patch %02d probabilities: %s", i,
+			log.info(String.format("Patch %02d probabilities: %s", i,
 				Arrays.toString(floatProbs[i])));
 		}
 
@@ -200,7 +200,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		// (otherwise the user will have to know to display the console
 		// window).
 		// Of course, this will go away once the annotate image is generated.
-		logService.error(
+		log.error(
 				"TODO: Display annotated image. Till then, see the beautiful log messages above");
 	}
 }
