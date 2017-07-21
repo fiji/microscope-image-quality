@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.imagej.Dataset;
+import net.imagej.tensorflow.TensorFlowService;
 import net.imagej.tensorflow.Tensors;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
@@ -34,6 +35,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.io.location.FileLocation;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -73,6 +75,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	implements Command
 {
 
+	private static final String MODEL_NAME = "microscope-image-quality";
+
 	// Same as the tag used in export_saved_model in the Python code.
 	private static final String MODEL_TAG = "inference";
 
@@ -84,31 +88,29 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		"serving_default";
 
 	@Parameter
+	private TensorFlowService tensorFlowService;
+
+	@Parameter
 	private LogService logService;
 
 	@Parameter(label = "Microscope Image")
 	private Img<T> originalImage;
 
-	@Parameter(label = "Focus Quality Model", style = "directory")
-	private File modelDir;
+	@Parameter(label = "Focus Quality Model (zip archive)")
+	private File modelArchive;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Dataset annotatedImage;
 
-	/*
-	 * The run() method is where we do the actual 'work' of the command.
-	 *
-	 * TODO(ashankar): The current implementation is extremely sub-optimal as the model
-	 * is being loaded on every call to run(). The model is pretty big (~100MB) and the
-	 * cost of loaded should be ammortized. Perhaps the model should be loaded once statically,
-	 * or implemented as a service plugin?
-	 */
 	@Override
 	public void run() {
-		final long loadModelStart = System.nanoTime();
-		try (SavedModelBundle model = SavedModelBundle.load(modelDir
-			.getAbsolutePath(), MODEL_TAG))
-		{
+		try {
+			validateFormat(originalImage);
+
+			final long loadModelStart = System.nanoTime();
+			final FileLocation source = new FileLocation(modelArchive);
+			final SavedModelBundle model = //
+					tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG);
 			final long loadModelEnd = System.nanoTime();
 			logService.info(String.format(
 				"Loaded microscope focus image quality model in %dms", (loadModelEnd -
@@ -120,7 +122,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			// the model exporter (export_saved_model()) in Python.
 			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
 				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
-			validateFormat(originalImage);
 			try (Tensor inputTensor = Tensors.tensor(originalImage, true)) {
 				final long runModelStart = System.nanoTime();
 				final List<Tensor> fetches = model.session().runner() //
@@ -132,34 +133,9 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 				try (Tensor probabilities = fetches.get(0);
 						Tensor patches = fetches.get(1))
 				{
-					logService.info(String.format("Ran image through model in %dms",
-						(runModelEnd - runModelStart) / 1000000));
-					logService.info("Probabilities shape: " + Arrays.toString(
-						probabilities.shape()));
-					logService.info("Patches shape: " + Arrays.toString(patches.shape()));
-
-					final float[][] floatProbs = new float[(int) probabilities
-						.shape()[0]][(int) probabilities.shape()[1]];
-					probabilities.copyTo(floatProbs);
-					for (int i = 0; i < probabilities.shape()[0]; ++i) {
-						logService.info(String.format("Patch %02d probabilities: %s", i,
-							Arrays.toString(floatProbs[i])));
-					}
-
-					final int npatches = (int) patches.shape()[0];
-					final int patchSide = (int) patches.shape()[1];
-					assert patchSide == (int) patches.shape()[2]; // Square patches
-					assert patches.shape()[3] == 1;
-
-					// Log an error to force the console log to display
-					// (otherwise the user will have to know to display the console
-					// window).
-					// Of course, this will go away once the annotate image is generated.
-					logService.error(
-						"TODO: Display annotated image. Till then, see the beautiful log messages above");
+					processPatches(runModelStart, runModelEnd, probabilities, patches);
 				}
 			}
-
 		}
 		catch (final Exception exc) {
 			// Use the LogService to report the error.
@@ -196,5 +172,35 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			return n.substring(0, n.lastIndexOf(":0"));
 		}
 		return n;
+	}
+
+	private void processPatches(final long runModelStart, final long runModelEnd,
+		Tensor probabilities, Tensor patches)
+	{
+		logService.info(String.format("Ran image through model in %dms",
+			(runModelEnd - runModelStart) / 1000000));
+		logService.info("Probabilities shape: " + Arrays.toString(probabilities
+			.shape()));
+		logService.info("Patches shape: " + Arrays.toString(patches.shape()));
+
+		final float[][] floatProbs = new float[(int) probabilities
+			.shape()[0]][(int) probabilities.shape()[1]];
+		probabilities.copyTo(floatProbs);
+		for (int i = 0; i < probabilities.shape()[0]; ++i) {
+			logService.info(String.format("Patch %02d probabilities: %s", i,
+				Arrays.toString(floatProbs[i])));
+		}
+
+		final int npatches = (int) patches.shape()[0];
+		final int patchSide = (int) patches.shape()[1];
+		assert patchSide == (int) patches.shape()[2]; // Square patches
+		assert patches.shape()[3] == 1;
+
+		// Log an error to force the console log to display
+		// (otherwise the user will have to know to display the console
+		// window).
+		// Of course, this will go away once the annotate image is generated.
+		logService.error(
+				"TODO: Display annotated image. Till then, see the beautiful log messages above");
 	}
 }
