@@ -117,9 +117,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 					loadModelStart) / 1000000));
 
 			// Extract names from the model signature.
-			// The strings "input", "probabilities" and "patches" are meant to be in
-			// sync with
-			// the model exporter (export_saved_model()) in Python.
+			// The strings "input", "probabilities" and "patches" are meant to be
+			// in sync with the model exporter (export_saved_model()) in Python.
 			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
 				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
 			try (Tensor inputTensor = Tensors.tensor(originalImage, true)) {
