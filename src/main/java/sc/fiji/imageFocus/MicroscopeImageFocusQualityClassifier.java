@@ -57,16 +57,11 @@ import org.tensorflow.framework.TensorInfo;
  * This command will show both the input image and an annotated image marking
  * regions of the image with their focus quality.
  * <p>
- * This is a first draft, some TODOs:
+ * Still TODO:
  * <ul>
  * <li>Generate the annotated image from the model's output quality for each
  * tensor (and then set {@code annotatedImage} to the annotated image). For now,
  * the patch qualities are just dumped into the console log.
- * <li>Avoid loading the model from disk on every invocation of the command, as
- * that slows down the classifer (loading ~100MB of data into memory on every
- * invocation)
- * <li>Perhaps package the classification model with the plugin instead of
- * asking the user to locate the model on their local disk.
  * </ul>
  */
 @Plugin(type = Command.class, menuPath = "Microscopy>Focus Quality")
