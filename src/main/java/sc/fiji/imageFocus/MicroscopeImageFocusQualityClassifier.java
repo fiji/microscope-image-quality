@@ -21,7 +21,6 @@
 
 package sc.fiji.imageFocus;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +34,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
-import org.scijava.io.location.FileLocation;
+import org.scijava.io.http.HTTPLocation;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -75,6 +74,9 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	implements Command
 {
 
+	private static final String MODEL_URL =
+		"https://storage.googleapis.com/microscope-image-quality/static/model/fiji/microscope-image-quality-model.zip";
+
 	private static final String MODEL_NAME = "microscope-image-quality";
 
 	// Same as the tag used in export_saved_model in the Python code.
@@ -96,9 +98,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	@Parameter(label = "Microscope Image")
 	private Img<T> originalImage;
 
-	@Parameter(label = "Focus Quality Model (zip archive)")
-	private File modelArchive;
-
 	@Parameter(type = ItemIO.OUTPUT)
 	private Dataset annotatedImage;
 
@@ -108,7 +107,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			validateFormat(originalImage);
 
 			final long loadModelStart = System.nanoTime();
-			final FileLocation source = new FileLocation(modelArchive);
+			final HTTPLocation source = new HTTPLocation(MODEL_URL);
 			final SavedModelBundle model = //
 					tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG);
 			final long loadModelEnd = System.nanoTime();
