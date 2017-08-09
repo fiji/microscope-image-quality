@@ -168,26 +168,35 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	}
 
 	private void processPatches(final long runModelStart, final long runModelEnd,
-		Tensor probabilities, Tensor patches)
+		final Tensor probabilities, final Tensor patches)
 	{
 		log.info(String.format("Ran image through model in %dms",
 			(runModelEnd - runModelStart) / 1000000));
-		log.info("Probabilities shape: " + Arrays.toString(probabilities
-			.shape()));
-		log.info("Patches shape: " + Arrays.toString(patches.shape()));
 
-		final float[][] floatProbs = new float[(int) probabilities
-			.shape()[0]][(int) probabilities.shape()[1]];
-		probabilities.copyTo(floatProbs);
-		for (int i = 0; i < probabilities.shape()[0]; ++i) {
-			log.info(String.format("Patch %02d probabilities: %s", i,
-				Arrays.toString(floatProbs[i])));
+		// Extract probability values.
+		final long[] probShape = probabilities.shape();
+		log.info("Probabilities shape: " + Arrays.toString(probShape));
+		final int probPatchCount = (int) probShape[0];
+		final int classCount = (int) probShape[1];
+		final float[][] probValues = new float[probPatchCount][classCount];
+		probabilities.copyTo(probValues);
+
+		// Extract and validate patch layout.
+		final long[] patchShape = patches.shape();
+		log.info("Patches shape: " + Arrays.toString(patchShape));
+		assert patchShape.length == 4;
+		final int patchCount = (int) patchShape[0];
+		assert patchCount == probPatchCount;
+		final int patchHeight = (int) patchShape[1];
+		final int patchWidth = (int) patchShape[2];
+		assert patchWidth == patchHeight; // Square patches
+		assert patchShape[3] == 1;
+
+		// Dump probabilities to the log.
+		for (int i = 0; i < probShape[0]; ++i) {
+			log.info(String.format("Patch %02d probabilities: %s", i, //
+				Arrays.toString(probValues[i])));
 		}
-
-		final int npatches = (int) patches.shape()[0];
-		final int patchSide = (int) patches.shape()[1];
-		assert patchSide == (int) patches.shape()[2]; // Square patches
-		assert patches.shape()[3] == 1;
 
 		// Log an error to force the console log to display
 		// (otherwise the user will have to know to display the console
