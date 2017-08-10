@@ -164,6 +164,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
 				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
 			try (final Tensor inputTensor = Tensors.tensor(originalImage, true)) {
+				// Run the model.
 				final long runModelStart = System.nanoTime();
 				final List<Tensor> fetches = model.session().runner() //
 					.feed(opName(sig.getInputsOrThrow("input")), inputTensor) //
@@ -171,10 +172,14 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 					.fetch(opName(sig.getOutputsOrThrow("patches"))) //
 					.run();
 				final long runModelEnd = System.nanoTime();
+				log.info(String.format("Ran image through model in %dms", //
+					(runModelEnd - runModelStart) / 1000000));
+
+				// Process the results.
 				try (final Tensor probabilities = fetches.get(0);
 						final Tensor patches = fetches.get(1))
 				{
-					processPatches(runModelStart, runModelEnd, probabilities, patches);
+					processPatches(probabilities, patches);
 				}
 			}
 		}
@@ -213,12 +218,9 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		return n;
 	}
 
-	private void processPatches(final long runModelStart, final long runModelEnd,
-		final Tensor probabilities, final Tensor patches)
+	private void processPatches(final Tensor probabilities,
+		final Tensor patches)
 	{
-		log.info(String.format("Ran image through model in %dms",
-			(runModelEnd - runModelStart) / 1000000));
-
 		// Extract probability values.
 		final long[] probShape = probabilities.shape();
 		log.debug("Probabilities shape: " + Arrays.toString(probShape));
