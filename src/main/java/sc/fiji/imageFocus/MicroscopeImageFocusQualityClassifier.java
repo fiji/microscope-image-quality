@@ -21,6 +21,11 @@
 
 package sc.fiji.imageFocus;
 
+import ij.ImagePlus;
+import ij.gui.Overlay;
+import ij.gui.Roi;
+
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +39,7 @@ import net.imagej.display.ColorTables;
 import net.imagej.tensorflow.TensorFlowService;
 import net.imagej.tensorflow.Tensors;
 import net.imglib2.Cursor;
+import net.imglib2.display.ColorTable8;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -45,6 +51,7 @@ import org.scijava.io.http.HTTPLocation;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.NumberWidget;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Tensor;
 import org.tensorflow.framework.MetaGraphDef;
@@ -62,7 +69,9 @@ import org.tensorflow.framework.TensorInfo;
  * </p>
  * <p>
  * This command optionally produces a multi-channel image of probability values
- * where each channel corresponds to one focus class.
+ * where each channel corresponds to one focus class, and optionally adds an
+ * overlay annotation to the input image to visualize the most likely focus
+ * class of each region.
  * </p>
  */
 @Plugin(type = Command.class,
@@ -98,11 +107,39 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	@Parameter(label = "Microscope Image")
 	private Img<T> originalImage;
 
+	/**
+	 * ImageJ 1.x version of the image to process.
+	 * <p>
+	 * Only used for overlaying patches.
+	 * </p>
+	 */
+	@Parameter(required = false)
+	private ImagePlus originalImagePlus;
+
 	@Parameter(label = "Generate probability image",
 		description = "<html>When checked, a multi-channel image will be created " +
 			"with one channel per focus level,<br>and each value corresponding " +
 			"to the probability of that sample being at that focus level.")
 	private boolean createProbabilityImage = true;
+
+	@Parameter(label = "Overlay probability patches",
+		description = "<html>When checked, each classified region of the image " +
+			"will be overlaid with a color<br>whose hue denotes the most likely " +
+			"focus level and whose brightness denotes<br>the confidence " +
+			"(i.e., probability) of the region being at that level.")
+	private boolean overlayPatches = true;
+
+	@Parameter(label = "Solid patches",
+		description = "<html>When checked, overlaid probability patches will be " +
+			"filled semi-transparent<br>and solid; when unchecked, they will be " +
+			"drawn as hollow boundary boxes.")
+	private boolean solidPatches;
+
+	@Parameter(label = "Patch border width", //
+		min = "1", max = "10", style = NumberWidget.SCROLL_BAR_STYLE,
+		description = "When drawing probability patches as boundary boxes, " +
+			"this option controls the box thickness.")
+	private int borderWidth = 4;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Dataset probDataset;
@@ -210,6 +247,11 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		if (createProbabilityImage) {
 			createProbabilityImage(classCount, probValues, patchHeight, patchWidth);
 		}
+
+		// Add ImageJ 1.x overlay to the active image.
+		if (overlayPatches && originalImagePlus != null) {
+			addOverlay(probValues, patchWidth, patchHeight);
+		}
 	}
 
 	private void createProbabilityImage(final int classCount,
@@ -245,5 +287,59 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			final int p = patchesInX * patchIndexY + patchIndexX;
 			cursor.get().set(probValues[p][c]);
 		}
+	}
+
+	private void addOverlay(final float[][] probValues, //
+		final int patchWidth, final int patchHeight)
+	{
+		final int patchCount = probValues.length;
+		final int classCount = probValues[0].length;
+		final int patchesInX = originalImagePlus.getWidth() / patchWidth;
+
+		final Overlay overlay = new Overlay();
+
+		final int strokeWidth = solidPatches ? 0 : borderWidth;
+		// TODO: Use a better color table that avoids ambiguity.
+		final ColorTable8 lut = ColorTables.SPECTRUM;
+
+		for (int p = 0; p < patchCount; p++) {
+			final int patchIndexX = p % patchesInX;
+			final int patchIndexY = p / patchesInX;
+			final int offsetX = patchWidth * patchIndexX + strokeWidth / 2;
+			final int offsetY = patchHeight * patchIndexY + strokeWidth / 2;
+
+			final Roi roi = new Roi(offsetX, offsetY, //
+				patchWidth - strokeWidth, patchHeight - strokeWidth);
+			final int classIndex = maxIndex(probValues[p]);
+			final double confidence = probValues[p][classIndex];
+			final int lutIndex = 255 * classIndex / (classCount - 1);
+
+			final int r = (int) (lut.get(0, lutIndex) * confidence);
+			final int g = (int) (lut.get(1, lutIndex) * confidence);
+			final int b = (int) (lut.get(2, lutIndex) * confidence);
+			final int opacity = solidPatches ? 128 : 255;
+			final Color color = new Color(r, g, b, opacity);
+			if (solidPatches) {
+				roi.setFillColor(color);
+			}
+			else {
+				roi.setStrokeColor(color);
+				roi.setStrokeWidth(strokeWidth);
+			}
+			overlay.add(roi);
+		}
+		originalImagePlus.setOverlay(overlay);
+	}
+
+	private int maxIndex(final float[] values) {
+		float max = values[0];
+		int index = 0;
+		for (int i = 1; i < values.length; i++) {
+			if (values[i] > max) {
+				max = values[i];
+				index = i;
+			}
+		}
+		return index;
 	}
 }

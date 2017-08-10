@@ -110,6 +110,11 @@ University of Wisconsin-Madison.</license.copyrightOwners>
 			<artifactId>imagej</artifactId>
 		</dependency>
 		<dependency>
+			<!-- NB: For ImageJ 1.x overlay visualization. -->
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-tensorflow</artifactId>
 			<version>${imagej-tensorflow.version}</version>
