@@ -26,11 +26,18 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.imagej.Dataset;
+import net.imagej.DatasetService;
+import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
+import net.imagej.display.ColorTables;
 import net.imagej.tensorflow.TensorFlowService;
 import net.imagej.tensorflow.Tensors;
+import net.imglib2.Cursor;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
@@ -54,15 +61,9 @@ import org.tensorflow.framework.TensorInfo;
  * {@code [~1000, ~10,000]}.
  * </p>
  * <p>
- * This command will show both the input image and an annotated image marking
- * regions of the image with their focus quality.
- * <p>
- * Still TODO:
- * <ul>
- * <li>Generate the annotated image from the model's output quality for each
- * tensor (and then set {@code annotatedImage} to the annotated image). For now,
- * the patch qualities are just dumped into the console log.
- * </ul>
+ * This command optionally produces a multi-channel image of probability values
+ * where each channel corresponds to one focus class.
+ * </p>
  */
 @Plugin(type = Command.class,
 	menuPath = "Plugins>Classification>Microscope Image Focus Quality")
@@ -89,13 +90,22 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	private TensorFlowService tensorFlowService;
 
 	@Parameter
+	private DatasetService datasetService;
+
+	@Parameter
 	private LogService log;
 
 	@Parameter(label = "Microscope Image")
 	private Img<T> originalImage;
 
+	@Parameter(label = "Generate probability image",
+		description = "<html>When checked, a multi-channel image will be created " +
+			"with one channel per focus level,<br>and each value corresponding " +
+			"to the probability of that sample being at that focus level.")
+	private boolean createProbabilityImage = true;
+
 	@Parameter(type = ItemIO.OUTPUT)
-	private Dataset annotatedImage;
+	private Dataset probDataset;
 
 	@Override
 	public void run() {
@@ -198,11 +208,44 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 				Arrays.toString(probValues[i])));
 		}
 
-		// Log an error to force the console log to display
-		// (otherwise the user will have to know to display the console
-		// window).
-		// Of course, this will go away once the annotate image is generated.
-		log.error(
-				"TODO: Display annotated image. Till then, see the beautiful log messages above");
+		// Synthesize matched-size image with computed probabilities.
+		if (createProbabilityImage) {
+			createProbabilityImage(classCount, probValues, patchHeight, patchWidth);
+		}
+	}
+
+	private void createProbabilityImage(final int classCount,
+		final float[][] probValues, final int patchHeight, final int patchWidth)
+	{
+		final int patchesInX = (int) originalImage.dimension(0) / patchWidth;
+		final int patchesInY = (int) originalImage.dimension(1) / patchHeight;
+
+		// Create probability image.
+		final long width = patchWidth * patchesInX;
+		final long height = patchHeight * patchesInY;
+		final long[] dims = { width, height, classCount };
+		final AxisType[] axes = { Axes.X, Axes.Y, Axes.CHANNEL };
+		final FloatType type = new FloatType();
+		probDataset = datasetService.create(type, dims, "Probabilities", axes,
+			false);
+
+		// Set the probability image to grayscale.
+		probDataset.initializeColorTables(classCount);
+		for (int c = 0; c < classCount; c++) {
+			probDataset.setColorTable(ColorTables.GRAYS, c);
+		}
+
+		// Populate the probability image's sample values.
+		final ImgPlus<FloatType> probImg = probDataset.typedImg(type);
+		final Cursor<FloatType> cursor = probImg.localizingCursor();
+		final int[] pos = new int[dims.length];
+		while (cursor.hasNext()) {
+			cursor.next();
+			cursor.localize(pos);
+			final int x = pos[0], y = pos[1], c = pos[2];
+			final int patchIndexX = x / patchWidth, patchIndexY = y / patchHeight;
+			final int p = patchesInX * patchIndexY + patchIndexX;
+			cursor.get().set(probValues[p][c]);
+		}
 	}
 }
