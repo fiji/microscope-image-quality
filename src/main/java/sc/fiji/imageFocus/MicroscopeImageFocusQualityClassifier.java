@@ -175,7 +175,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 
 		// Extract probability values.
 		final long[] probShape = probabilities.shape();
-		log.info("Probabilities shape: " + Arrays.toString(probShape));
+		log.debug("Probabilities shape: " + Arrays.toString(probShape));
 		final int probPatchCount = (int) probShape[0];
 		final int classCount = (int) probShape[1];
 		final float[][] probValues = new float[probPatchCount][classCount];
@@ -183,7 +183,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 
 		// Extract and validate patch layout.
 		final long[] patchShape = patches.shape();
-		log.info("Patches shape: " + Arrays.toString(patchShape));
+		log.debug("Patches shape: " + Arrays.toString(patchShape));
 		assert patchShape.length == 4;
 		final int patchCount = (int) patchShape[0];
 		assert patchCount == probPatchCount;
