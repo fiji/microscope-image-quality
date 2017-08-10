@@ -152,7 +152,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			final long loadModelStart = System.nanoTime();
 			final HTTPLocation source = new HTTPLocation(MODEL_URL);
 			final SavedModelBundle model = //
-					tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG);
+				tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG);
 			final long loadModelEnd = System.nanoTime();
 			log.info(String.format(
 				"Loaded microscope focus image quality model in %dms", (loadModelEnd -
@@ -194,9 +194,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		if (ndims != 2) {
 			final long[] dims = new long[ndims];
 			image.dimensions(dims);
-			throw new IOException(
-				"Can only process 2D images, not an image with " + ndims +
-					" dimensions (" + Arrays.toString(dims) + ")");
+			throw new IOException("Can only process 2D images, not an image with " +
+				ndims + " dimensions (" + Arrays.toString(dims) + ")");
 		}
 		if (!(image.firstElement() instanceof UnsignedShortType)) {
 			throw new IOException("Can only process uint16 images. " +
