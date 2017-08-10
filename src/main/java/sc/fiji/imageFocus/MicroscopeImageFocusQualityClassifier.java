@@ -147,9 +147,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		}
 	}
 
-	private void validateFormat(final Img<T> image)
-		throws IOException
-	{
+	private void validateFormat(final Img<T> image) throws IOException {
 		final int ndims = image.numDimensions();
 		if (ndims != 2) {
 			final long[] dims = new long[ndims];
