@@ -189,7 +189,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		assert patchCount == probPatchCount;
 		final int patchHeight = (int) patchShape[1];
 		final int patchWidth = (int) patchShape[2];
-		assert patchWidth == patchHeight; // Square patches
 		assert patchShape[3] == 1;
 
 		// Dump probabilities to the log.
