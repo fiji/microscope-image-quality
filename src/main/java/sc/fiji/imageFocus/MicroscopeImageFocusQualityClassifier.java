@@ -313,7 +313,10 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 				patchWidth - strokeWidth, patchHeight - strokeWidth);
 			final int classIndex = maxIndex(probValues[p]);
 			final double confidence = probValues[p][classIndex];
-			final int lutIndex = 255 * classIndex / (classCount - 1);
+
+			// NB: We scale to (0, 172) here instead of (0, 255) to avoid the high
+			// indices looping from blue and purple back into red territory where we started.
+			final int lutIndex = 172 * classIndex / (classCount - 1);
 
 			final int r = (int) (lut.get(0, lutIndex) * confidence);
 			final int g = (int) (lut.get(1, lutIndex) * confidence);
