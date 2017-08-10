@@ -64,7 +64,8 @@ import org.tensorflow.framework.TensorInfo;
  * the patch qualities are just dumped into the console log.
  * </ul>
  */
-@Plugin(type = Command.class, menuPath = "Microscopy>Focus Quality")
+@Plugin(type = Command.class,
+	menuPath = "Plugins>Classification>Microscope Image Focus Quality")
 public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	implements Command
 {
