@@ -84,7 +84,7 @@
 	</ciManagement>
 
 	<properties>
-		<main-class>sc.fiji.imageFocus.MicroscopeImageFocusQualityClassifier</main-class>
+		<main-class>sc.fiji.imageFocus.Main</main-class>
 		<package-name>sc.fiji.imageFocus</package-name>
 		<license.licenseName>apache_v2</license.licenseName>
 		<license.copyrightOwners>Google, Inc. and Board of Regents of the
