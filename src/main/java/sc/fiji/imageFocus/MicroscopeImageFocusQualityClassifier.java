@@ -300,7 +300,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		final Overlay overlay = new Overlay();
 
 		final int strokeWidth = solidPatches ? 0 : borderWidth;
-		// TODO: Use a better color table that avoids ambiguity.
 		final ColorTable8 lut = ColorTables.SPECTRUM;
 
 		for (int p = 0; p < patchCount; p++) {
