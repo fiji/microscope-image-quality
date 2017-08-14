@@ -129,13 +129,13 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			"(i.e., probability) of the region being at that level.")
 	private boolean overlayPatches = true;
 
-	@Parameter(label = "Solid patches",
+	@Parameter(label = "Show patches as solid rectangles",
 		description = "<html>When checked, overlaid probability patches will be " +
 			"filled semi-transparent<br>and solid; when unchecked, they will be " +
 			"drawn as hollow boundary boxes.")
 	private boolean solidPatches;
 
-	@Parameter(label = "Patch border width", //
+	@Parameter(label = "Displayed patch border width", //
 		min = "1", max = "10", style = NumberWidget.SCROLL_BAR_STYLE,
 		description = "When drawing probability patches as boundary boxes, " +
 			"this option controls the box thickness.")
