@@ -22,8 +22,10 @@
 package sc.fiji.imageFocus;
 
 import ij.ImagePlus;
+import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.Roi;
+import ij.gui.TextRoi;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -301,6 +303,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 
 		final int strokeWidth = solidPatches ? 0 : borderWidth;
 		final ColorTable8 lut = ColorTables.SPECTRUM;
+		final int lutMaxIndex = 172;
 
 		for (int p = 0; p < patchCount; p++) {
 			final int patchIndexX = p % patchesInX;
@@ -315,7 +318,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 
 			// NB: We scale to (0, 172) here instead of (0, 255) to avoid the high
 			// indices looping from blue and purple back into red where we started.
-			final int lutIndex = 172 * classIndex / (classCount - 1);
+			final int lutIndex = lutMaxIndex * classIndex / (classCount - 1);
 
 			final int r = (int) (lut.get(0, lutIndex) * confidence);
 			final int g = (int) (lut.get(1, lutIndex) * confidence);
@@ -331,6 +334,33 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			}
 			overlay.add(roi);
 		}
+
+		// Add color bar with legend.
+
+		final int barHeight = 24, barPad = 5;
+		final int barY = originalImagePlus.getHeight() - barHeight - barPad;
+
+		final TextRoi labelGood = new TextRoi(barPad, barY, "In focus");
+		labelGood.setStrokeColor(Color.white);
+		overlay.add(labelGood);
+
+		final int barOffset = 2 * barPad + (int) labelGood.getBounds().getWidth();
+
+		final TextRoi labelBad = new TextRoi(barOffset + lutMaxIndex + barPad,
+			barY, "Out of focus");
+		labelBad.setStrokeColor(Color.white);
+		overlay.add(labelBad);
+
+		for (int i = 0; i < lutMaxIndex; i++) {
+			final int barX = barOffset + i;
+			final Roi line = new Line(barX, barY, barX, barY + barHeight);
+			final int r = lut.get(0, i);
+			final int g = lut.get(1, i);
+			final int b = lut.get(2, i);
+			line.setStrokeColor(new Color(r, g, b));
+			overlay.add(line);
+		}
+
 		originalImagePlus.setOverlay(overlay);
 	}
 
