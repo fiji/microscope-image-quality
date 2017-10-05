@@ -88,6 +88,9 @@
 University of Wisconsin-Madison.</license.copyrightOwners>
 		<!-- TODO: remove override once pom-scijava 17.0.1 is released. -->
 		<imagej-tensorflow.version>0.1.1</imagej-tensorflow.version>
+
+		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
+		<releaseProfiles>deploy-to-imagej</releaseProfiles>
 	</properties>
 
 	<repositories>
