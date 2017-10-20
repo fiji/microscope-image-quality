@@ -41,6 +41,9 @@ import net.imagej.display.ColorTables;
 import net.imagej.tensorflow.TensorFlowService;
 import net.imagej.tensorflow.Tensors;
 import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converter;
+import net.imglib2.converter.Converters;
 import net.imglib2.display.ColorTable8;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
@@ -150,6 +153,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	public void run() {
 		try {
 			validateFormat(originalImage);
+			RandomAccessibleInterval<FloatType> normalizedImage = normalize(originalImage);
 
 			final long loadModelStart = System.nanoTime();
 			final HTTPLocation source = new HTTPLocation(MODEL_URL);
@@ -165,7 +169,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			// in sync with the model exporter (export_saved_model()) in Python.
 			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
 				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
-			try (final Tensor inputTensor = Tensors.tensor(originalImage, true)) {
+			try (final Tensor inputTensor = Tensors.tensor(normalizedImage)) {
 				// Run the model.
 				final long runModelStart = System.nanoTime();
 				final List<Tensor> fetches = model.session().runner() //
@@ -203,6 +207,17 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			throw new IOException("Can only process uint16 images. " +
 				"Please convert your image first via Image > Type > 16-bit.");
 		}
+	}
+
+	private RandomAccessibleInterval<FloatType> normalize(final RandomAccessibleInterval<T> image) {
+		// NB: Copied from previous Tensors class to give same results
+		// NB: Theoretically unsound, but works in practice for needed
+		// cases.
+		final double min = image.randomAccess().get().getMinValue();
+		final double max = image.randomAccess().get().getMaxValue();
+		Converter<T, FloatType> normalizer = (input, output) -> output
+				.setReal((input.getRealDouble() - min) / (max - min));
+		return Converters.convert(image, normalizer, new FloatType());
 	}
 
 	/**
