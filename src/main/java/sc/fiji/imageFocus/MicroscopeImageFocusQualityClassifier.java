@@ -42,8 +42,6 @@ import net.imagej.tensorflow.TensorFlowService;
 import net.imagej.tensorflow.Tensors;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.converter.Converter;
-import net.imglib2.converter.Converters;
 import net.imglib2.display.ColorTable8;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
@@ -153,7 +151,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	public void run() {
 		try {
 			validateFormat(originalImage);
-			RandomAccessibleInterval<FloatType> normalizedImage = normalize(originalImage);
+			final RandomAccessibleInterval<FloatType> normalizedImage = //
+				Images.normalize(originalImage);
 
 			final long loadModelStart = System.nanoTime();
 			final HTTPLocation source = new HTTPLocation(MODEL_URL);
@@ -207,31 +206,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			throw new IOException("Can only process uint16 images. " +
 				"Please convert your image first via Image > Type > 16-bit.");
 		}
-	}
-
-	private RandomAccessibleInterval<FloatType> normalize(final RandomAccessibleInterval<T> image) {
-		// NB: Copied from previous Tensors class to give same results
-		// NB: Theoretically unsound, but works in practice for needed
-		// cases.
-		final double min = image.randomAccess().get().getMinValue();
-		final double max = image.randomAccess().get().getMaxValue();
-		Converter<T, FloatType> normalizer = (input, output) -> output
-				.setReal((input.getRealDouble() - min) / (max - min));
-		return Converters.convert(image, normalizer, new FloatType());
-	}
-
-	/**
-	 * The SignatureDef inputs and outputs contain names of the form
-	 * {@code <operation_name>:<output_index>}, where for this model,
-	 * {@code <output_index>} is always 0. This function trims the {@code :0}
-	 * suffix to get the operation name.
-	 */
-	private static String opName(final TensorInfo t) {
-		final String n = t.getName();
-		if (n.endsWith(":0")) {
-			return n.substring(0, n.lastIndexOf(":0"));
-		}
-		return n;
 	}
 
 	private void processPatches(final Tensor probabilities,
@@ -379,7 +353,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		originalImagePlus.setOverlay(overlay);
 	}
 
-	private int maxIndex(final float[] values) {
+	private static int maxIndex(final float[] values) {
 		float max = values[0];
 		int index = 0;
 		for (int i = 1; i < values.length; i++) {
@@ -389,5 +363,19 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			}
 		}
 		return index;
+	}
+
+	/**
+	 * The SignatureDef inputs and outputs contain names of the form
+	 * {@code <operation_name>:<output_index>}, where for this model,
+	 * {@code <output_index>} is always 0. This function trims the {@code :0}
+	 * suffix to get the operation name.
+	 */
+	private static String opName(final TensorInfo t) {
+		final String n = t.getName();
+		if (n.endsWith(":0")) {
+			return n.substring(0, n.lastIndexOf(":0"));
+		}
+		return n;
 	}
 }
