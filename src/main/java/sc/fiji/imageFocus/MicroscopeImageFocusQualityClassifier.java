@@ -327,10 +327,12 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		probDataset = datasetService.create(type, dims, "Probabilities", axes,
 			false);
 
-		// Set the probability image to grayscale.
+		// Set the probability image to normalized grayscale.
 		probDataset.initializeColorTables(classCount);
 		for (int c = 0; c < classCount; c++) {
 			probDataset.setColorTable(ColorTables.GRAYS, c);
+			probDataset.setChannelMinimum(c, 0);
+			probDataset.setChannelMaximum(c, 1);
 		}
 
 		final ImgPlus<FloatType> probImg = probDataset.typedImg(type);
