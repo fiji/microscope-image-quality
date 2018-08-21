@@ -40,18 +40,18 @@ import net.imagej.axis.AxisType;
 import net.imagej.display.ColorTables;
 import net.imagej.tensorflow.TensorFlowService;
 import net.imagej.tensorflow.Tensors;
-import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.converter.Converter;
-import net.imglib2.converter.Converters;
 import net.imglib2.display.ColorTable8;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 
+import org.scijava.Initializable;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.command.Previewable;
 import org.scijava.io.http.HTTPLocation;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -82,7 +82,7 @@ import org.tensorflow.framework.TensorInfo;
 @Plugin(type = Command.class,
 	menuPath = "Plugins>Classification>Microscope Image Focus Quality")
 public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
-	implements Command
+	implements Command, Initializable, Previewable
 {
 
 	private static final String MODEL_URL =
@@ -99,6 +99,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	// API.
 	private static final String DEFAULT_SERVING_SIGNATURE_DEF_KEY =
 		"serving_default";
+
+	private static final int TILE_SIZE = 84;
 
 	@Parameter
 	private TensorFlowService tensorFlowService;
@@ -120,6 +122,22 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	 */
 	@Parameter(required = false)
 	private ImagePlus originalImagePlus;
+
+	private Overlay originalOverlay;
+
+	@Parameter(label = "Number of tiles in X", persist = false,
+		callback = "refreshTilePreview", min = "1",
+		description = "<html>The number of tiles to process in the X direction. " +
+			"The smaller this value, the less<br>of the image will be covered " +
+			"horizontally, but the faster the processing will be.")
+	private long tileCountX = 1;
+
+	@Parameter(label = "Number of tiles in Y", persist = false,
+		callback = "refreshTilePreview", min = "1",
+		description = "<html>The number of tiles to process in the Y direction. " +
+			"The smaller this value, the less<br>of the image will be covered " +
+			"vertically, but the faster the processing will be.")
+	private long tileCountY = 1;
 
 	@Parameter(label = "Generate probability image",
 		description = "<html>When checked, a multi-channel image will be created " +
@@ -153,7 +171,10 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	public void run() {
 		try {
 			validateFormat(originalImage);
-			RandomAccessibleInterval<FloatType> normalizedImage = normalize(originalImage);
+			final RandomAccessibleInterval<T> tiledImage = //
+				Images.tile(originalImage, tileCountX, tileCountY, TILE_SIZE, TILE_SIZE);
+			final RandomAccessibleInterval<FloatType> normalizedImage = //
+				Images.normalize(tiledImage);
 
 			final long loadModelStart = System.nanoTime();
 			final HTTPLocation source = new HTTPLocation(MODEL_URL);
@@ -195,6 +216,53 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		}
 	}
 
+	@Override
+	public void initialize() {
+		if (originalImage == null) return;
+		tileCountX = Math.max(1, originalImage.dimension(0) / TILE_SIZE);
+		tileCountY = Math.max(1, originalImage.dimension(1) / TILE_SIZE);
+		if (originalImagePlus != null) {
+			originalOverlay = originalImagePlus.getOverlay();
+		}
+		refreshTilePreview();
+	}
+
+	@Override
+	public void preview() {
+		// NB: No action needed.
+	}
+
+	@Override
+	public void cancel() {
+		if (originalImagePlus != null && originalOverlay != null) {
+			originalImagePlus.setOverlay(originalOverlay);
+		}
+	}
+
+	/** Callback method for {@link #tileCountX} and {@link #tileCountY}. */
+	private void refreshTilePreview() {
+		if (originalImagePlus == null) return;
+
+		final int tileOpacity = 64;
+		final Color evenColor = new Color(100, 255, 255, tileOpacity);
+		final Color oddColor = new Color(255, 255, 100, tileOpacity);
+
+		final long w = originalImage.dimension(0);
+		final long h = originalImage.dimension(1);
+
+		final Overlay overlay = new Overlay();
+		for (long y = 0; y < tileCountY; y++) {
+			final long offsetY = Images.offset(y, tileCountY, TILE_SIZE, h);
+			for (long x = 0; x < tileCountX; x++) {
+				final long offsetX = Images.offset(x, tileCountX, TILE_SIZE, w);
+				final Roi tile = new Roi(offsetX, offsetY, TILE_SIZE, TILE_SIZE);
+				tile.setFillColor((x + y) % 2 == 0 ? evenColor : oddColor);
+				overlay.add(tile);
+			}
+		}
+		originalImagePlus.setOverlay(overlay);
+	}
+
 	private void validateFormat(final Img<T> image) throws IOException {
 		final int ndims = image.numDimensions();
 		if (ndims != 2) {
@@ -207,31 +275,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			throw new IOException("Can only process uint16 images. " +
 				"Please convert your image first via Image > Type > 16-bit.");
 		}
-	}
-
-	private RandomAccessibleInterval<FloatType> normalize(final RandomAccessibleInterval<T> image) {
-		// NB: Copied from previous Tensors class to give same results
-		// NB: Theoretically unsound, but works in practice for needed
-		// cases.
-		final double min = image.randomAccess().get().getMinValue();
-		final double max = image.randomAccess().get().getMaxValue();
-		Converter<T, FloatType> normalizer = (input, output) -> output
-				.setReal((input.getRealDouble() - min) / (max - min));
-		return Converters.convert(image, normalizer, new FloatType());
-	}
-
-	/**
-	 * The SignatureDef inputs and outputs contain names of the form
-	 * {@code <operation_name>:<output_index>}, where for this model,
-	 * {@code <output_index>} is always 0. This function trims the {@code :0}
-	 * suffix to get the operation name.
-	 */
-	private static String opName(final TensorInfo t) {
-		final String n = t.getName();
-		if (n.endsWith(":0")) {
-			return n.substring(0, n.lastIndexOf(":0"));
-		}
-		return n;
 	}
 
 	private void processPatches(final Tensor probabilities,
@@ -275,35 +318,56 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	private void createProbabilityImage(final int classCount,
 		final float[][] probValues, final int patchHeight, final int patchWidth)
 	{
-		final int patchesInX = (int) originalImage.dimension(0) / patchWidth;
-		final int patchesInY = (int) originalImage.dimension(1) / patchHeight;
-
 		// Create probability image.
-		final long width = patchWidth * patchesInX;
-		final long height = patchHeight * patchesInY;
+		final long width = originalImage.dimension(0);
+		final long height = originalImage.dimension(1);
 		final long[] dims = { width, height, classCount };
 		final AxisType[] axes = { Axes.X, Axes.Y, Axes.CHANNEL };
 		final FloatType type = new FloatType();
 		probDataset = datasetService.create(type, dims, "Probabilities", axes,
 			false);
 
-		// Set the probability image to grayscale.
+		// Set the probability image to normalized grayscale.
 		probDataset.initializeColorTables(classCount);
 		for (int c = 0; c < classCount; c++) {
 			probDataset.setColorTable(ColorTables.GRAYS, c);
+			probDataset.setChannelMinimum(c, 0);
+			probDataset.setChannelMaximum(c, 1);
+		}
+
+		final ImgPlus<FloatType> probImg = probDataset.typedImg(type);
+
+		// Cover the probability image with NaNs.
+		// Real values will be written only to tile-covered areas.
+		for (final FloatType sample : probImg) {
+			sample.set(Float.NaN);
 		}
 
 		// Populate the probability image's sample values.
-		final ImgPlus<FloatType> probImg = probDataset.typedImg(type);
-		final Cursor<FloatType> cursor = probImg.localizingCursor();
-		final int[] pos = new int[dims.length];
-		while (cursor.hasNext()) {
-			cursor.next();
-			cursor.localize(pos);
-			final int x = pos[0], y = pos[1], c = pos[2];
-			final int patchIndexX = x / patchWidth, patchIndexY = y / patchHeight;
-			final int p = patchesInX * patchIndexY + patchIndexX;
-			cursor.get().set(probValues[p][c]);
+		final RandomAccess<FloatType> access = probImg.randomAccess();
+		for (int t = 0; t < probValues.length; t++) {
+			for (int c = 0; c < probValues[t].length; c++) {
+				// Compute tile coordinates from probability value index.
+				final long tx = t % tileCountX;
+				final long ty = t / tileCountX;
+
+				// Compute offset of tile in original image.
+				final long offsetX = Images.offset(tx, tileCountX, patchWidth, width);
+				final long offsetY = Images.offset(ty, tileCountY, patchHeight, height);
+
+				// Copy the current value to every sample within the tile.
+				final float value = probValues[t][c];
+				access.setPosition(c, 2);
+				access.setPosition(offsetY, 1);
+				for (int y = 0; y < TILE_SIZE; y++) {
+					access.setPosition(offsetX, 0);
+					for (int x = 0; x < TILE_SIZE; x++) {
+						access.get().set(value);
+						access.fwd(0);
+					}
+					access.fwd(1);
+				}
+			}
 		}
 	}
 
@@ -312,7 +376,6 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 	{
 		final int patchCount = probValues.length;
 		final int classCount = probValues[0].length;
-		final int patchesInX = originalImagePlus.getWidth() / patchWidth;
 
 		final Overlay overlay = new Overlay();
 
@@ -320,11 +383,14 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		final ColorTable8 lut = ColorTables.SPECTRUM;
 		final int lutMaxIndex = 172;
 
+		final long width = originalImage.dimension(0);
+		final long height = originalImage.dimension(1);
+
 		for (int p = 0; p < patchCount; p++) {
-			final int patchIndexX = p % patchesInX;
-			final int patchIndexY = p / patchesInX;
-			final int offsetX = patchWidth * patchIndexX + strokeWidth / 2;
-			final int offsetY = patchHeight * patchIndexY + strokeWidth / 2;
+			final long tx = p % tileCountX;
+			final long ty = p / tileCountX;
+			final long offsetX = Images.offset(tx, tileCountX, patchWidth, width) + strokeWidth / 2;
+			final long offsetY = Images.offset(ty, tileCountY, patchHeight, height) + strokeWidth / 2;
 
 			final Roi roi = new Roi(offsetX, offsetY, //
 				patchWidth - strokeWidth, patchHeight - strokeWidth);
@@ -379,7 +445,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		originalImagePlus.setOverlay(overlay);
 	}
 
-	private int maxIndex(final float[] values) {
+	private static int maxIndex(final float[] values) {
 		float max = values[0];
 		int index = 0;
 		for (int i = 1; i < values.length; i++) {
@@ -389,5 +455,19 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			}
 		}
 		return index;
+	}
+
+	/**
+	 * The SignatureDef inputs and outputs contain names of the form
+	 * {@code <operation_name>:<output_index>}, where for this model,
+	 * {@code <output_index>} is always 0. This function trims the {@code :0}
+	 * suffix to get the operation name.
+	 */
+	private static String opName(final TensorInfo t) {
+		final String n = t.getName();
+		if (n.endsWith(":0")) {
+			return n.substring(0, n.lastIndexOf(":0"));
+		}
+		return n;
 	}
 }
