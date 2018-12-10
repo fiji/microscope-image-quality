@@ -190,10 +190,10 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 			// in sync with the model exporter (export_saved_model()) in Python.
 			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
 				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
-			try (final Tensor inputTensor = Tensors.tensor(normalizedImage)) {
+			try (final Tensor<?> inputTensor = Tensors.tensor(normalizedImage)) {
 				// Run the model.
 				final long runModelStart = System.nanoTime();
-				final List<Tensor> fetches = model.session().runner() //
+				final List<Tensor<?>> fetches = model.session().runner() //
 					.feed(opName(sig.getInputsOrThrow("input")), inputTensor) //
 					.fetch(opName(sig.getOutputsOrThrow("probabilities"))) //
 					.fetch(opName(sig.getOutputsOrThrow("patches"))) //
@@ -203,8 +203,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 					(runModelEnd - runModelStart) / 1000000));
 
 				// Process the results.
-				try (final Tensor probabilities = fetches.get(0);
-						final Tensor patches = fetches.get(1))
+				try (final Tensor<?> probabilities = fetches.get(0);
+						final Tensor<?> patches = fetches.get(1))
 				{
 					processPatches(probabilities, patches);
 				}

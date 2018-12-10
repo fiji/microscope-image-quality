@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>17.1.1</version>
+		<version>24.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -86,8 +86,6 @@
 		<license.licenseName>apache_v2</license.licenseName>
 		<license.copyrightOwners>Google, Inc. and Board of Regents of the
 University of Wisconsin-Madison.</license.copyrightOwners>
-		<!-- TODO: remove override once pom-scijava 17.2.0 is released. -->
-		<imagej-tensorflow.version>0.2.0</imagej-tensorflow.version>
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-imagej</releaseProfiles>
@@ -113,17 +111,14 @@ University of Wisconsin-Madison.</license.copyrightOwners>
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-tensorflow</artifactId>
-			<version>${imagej-tensorflow.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.tensorflow</groupId>
 			<artifactId>tensorflow</artifactId>
-			<version>${tensorflow.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.tensorflow</groupId>
 			<artifactId>proto</artifactId>
-			<version>${proto.version}</version>
 		</dependency>
 
 		<dependency>
