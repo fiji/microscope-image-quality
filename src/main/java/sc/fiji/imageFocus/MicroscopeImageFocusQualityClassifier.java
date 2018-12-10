@@ -277,8 +277,8 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 		}
 	}
 
-	private void processPatches(final Tensor probabilities,
-		final Tensor patches)
+	private void processPatches(final Tensor<?> probabilities,
+		final Tensor<?> patches)
 	{
 		// Extract probability values.
 		final long[] probShape = probabilities.shape();
