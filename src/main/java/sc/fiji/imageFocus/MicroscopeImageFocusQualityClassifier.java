@@ -178,35 +178,36 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 
 			final long loadModelStart = System.nanoTime();
 			final HTTPLocation source = new HTTPLocation(MODEL_URL);
-			final SavedModelBundle model = //
-				tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG);
-			final long loadModelEnd = System.nanoTime();
-			log.info(String.format(
-				"Loaded microscope focus image quality model in %dms", (loadModelEnd -
-					loadModelStart) / 1000000));
+			try (final SavedModelBundle model = //
+					tensorFlowService.loadModel(source, MODEL_NAME, MODEL_TAG)) {
+				final long loadModelEnd = System.nanoTime();
+				log.info(String.format(
+					"Loaded microscope focus image quality model in %dms", (loadModelEnd -
+						loadModelStart) / 1000000));
 
-			// Extract names from the model signature.
-			// The strings "input", "probabilities" and "patches" are meant to be
-			// in sync with the model exporter (export_saved_model()) in Python.
-			final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
-				.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
-			try (final Tensor<?> inputTensor = Tensors.tensor(normalizedImage)) {
-				// Run the model.
-				final long runModelStart = System.nanoTime();
-				final List<Tensor<?>> fetches = model.session().runner() //
-					.feed(opName(sig.getInputsOrThrow("input")), inputTensor) //
-					.fetch(opName(sig.getOutputsOrThrow("probabilities"))) //
-					.fetch(opName(sig.getOutputsOrThrow("patches"))) //
-					.run();
-				final long runModelEnd = System.nanoTime();
-				log.info(String.format("Ran image through model in %dms", //
-					(runModelEnd - runModelStart) / 1000000));
+				// Extract names from the model signature.
+				// The strings "input", "probabilities" and "patches" are meant to be
+				// in sync with the model exporter (export_saved_model()) in Python.
+				final SignatureDef sig = MetaGraphDef.parseFrom(model.metaGraphDef())
+					.getSignatureDefOrThrow(DEFAULT_SERVING_SIGNATURE_DEF_KEY);
+				try (final Tensor<?> inputTensor = Tensors.tensor(normalizedImage)) {
+					// Run the model.
+					final long runModelStart = System.nanoTime();
+					final List<Tensor<?>> fetches = model.session().runner() //
+						.feed(opName(sig.getInputsOrThrow("input")), inputTensor) //
+						.fetch(opName(sig.getOutputsOrThrow("probabilities"))) //
+						.fetch(opName(sig.getOutputsOrThrow("patches"))) //
+						.run();
+					final long runModelEnd = System.nanoTime();
+					log.info(String.format("Ran image through model in %dms", //
+						(runModelEnd - runModelStart) / 1000000));
 
-				// Process the results.
-				try (final Tensor<?> probabilities = fetches.get(0);
-						final Tensor<?> patches = fetches.get(1))
-				{
-					processPatches(probabilities, patches);
+					// Process the results.
+					try (final Tensor<?> probabilities = fetches.get(0);
+							final Tensor<?> patches = fetches.get(1))
+					{
+						processPatches(probabilities, patches);
+					}
 				}
 			}
 		}
