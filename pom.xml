@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>microscope-image-quality</artifactId>
-	<version>0.1.2-SNAPSHOT</version>
+	<version>1.0.0</version>
 
 	<name>Microscopy Image Focus Quality Classifier</name>
 	<description>ImageJ plugin to analyze focus quality of microscope images.</description>
@@ -68,7 +68,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/fiji/microscope-image-quality</connection>
 		<developerConnection>scm:git:git@github.com:fiji/microscope-image-quality</developerConnection>
-		<tag>HEAD</tag>
+		<tag>microscope-image-quality-1.0.0</tag>
 		<url>https://github.com/fiji/microscope-image-quality</url>
 	</scm>
 	<issueManagement>
