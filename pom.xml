@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>microscope-image-quality</artifactId>
-	<version>0.1.2-SNAPSHOT</version>
+	<version>1.0.1-SNAPSHOT</version>
 
 	<name>Microscopy Image Focus Quality Classifier</name>
 	<description>ImageJ plugin to analyze focus quality of microscope images.</description>
