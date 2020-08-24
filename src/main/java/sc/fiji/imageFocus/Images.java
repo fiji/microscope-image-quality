@@ -2,8 +2,8 @@
  * #%L
  * ImageJ plugin to analyze focus quality of microscope images.
  * %%
- * Copyright (C) 2017 Google, Inc. and Board of Regents of the
- * University of Wisconsin-Madison.
+ * Copyright (C) 2017 - 2020 Google, Inc. and Board of Regents
+ * of the University of Wisconsin-Madison.
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

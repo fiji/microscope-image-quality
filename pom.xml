@@ -84,8 +84,8 @@
 		<main-class>sc.fiji.imageFocus.Main</main-class>
 		<package-name>sc.fiji.imageFocus</package-name>
 		<license.licenseName>apache_v2</license.licenseName>
-		<license.copyrightOwners>Google, Inc. and Board of Regents of the
-University of Wisconsin-Madison.</license.copyrightOwners>
+		<license.copyrightOwners>Google, Inc. and Board of Regents
+of the University of Wisconsin-Madison.</license.copyrightOwners>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
