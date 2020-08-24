@@ -86,7 +86,7 @@ public class MicroscopeImageFocusQualityClassifier<T extends RealType<T>>
 {
 
 	private static final String MODEL_URL =
-		"https://storage.googleapis.com/microscope-image-quality/static/model/fiji/microscope-image-quality-model.zip";
+		"https://downloads.imagej.net/fiji/models/microscope-image-quality-model.zip";
 
 	private static final String MODEL_NAME = "microscope-image-quality";
 
