@@ -1,4 +1,4 @@
-[![](https://travis-ci.org/fiji/microscope-image-quality.svg?branch=master)](https://travis-ci.org/fiji/microscope-image-quality)
+[![](https://github.com/fiji/microscope-image-quality/actions/workflows/build-main.yml/badge.svg)](https://github.com/fiji/microscope-image-quality/actions/workflows/build-main.yml)
 
 This project is an [ImageJ](https://imagej.net) plugin for Google's
 [microscope image focus quality classifier](https://github.com/google/microscopeimagequality).
