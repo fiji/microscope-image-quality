@@ -66,7 +66,7 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/fiji/microscope-image-quality</connection>
+		<connection>scm:git:https://github.com/fiji/microscope-image-quality</connection>
 		<developerConnection>scm:git:git@github.com:fiji/microscope-image-quality</developerConnection>
 		<tag>HEAD</tag>
 		<url>https://github.com/fiji/microscope-image-quality</url>
