@@ -1,4 +1,4 @@
-[![](https://github.com/fiji/microscope-image-quality/actions/workflows/build-main.yml/badge.svg)](https://github.com/fiji/microscope-image-quality/actions/workflows/build-main.yml)
+[![Build Status](https://github.com/fiji/microscope-image-quality/actions/workflows/build.yml/badge.svg)](https://github.com/fiji/microscope-image-quality/actions/workflows/build.yml)
 
 This project is an [ImageJ](https://imagej.net) plugin for Google's
 [microscope image focus quality classifier](https://github.com/google/microscopeimagequality).
